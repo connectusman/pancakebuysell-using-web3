@@ -19,13 +19,21 @@ const InAmount='10'
 let rawdata = fs.readFileSync('abi.json');
 let abi = JSON.parse(rawdata);
 
-
+let lock=false;
 app.get('/buy',(req,res)=>{
-    buytoken(res,req.query.prvKey,req.query.amount,req.query.token);
+    if(!lock)
+    {   
+        lock=true;
+        buytoken(res,req.query.prvKey,req.query.amount,req.query.token);
+    }
 })
 
 app.get('/sell',(req,res)=>{
-    selltoken(res,req.query.prvKey,req.query.amount,req.query.token);
+    if(!lock)
+    {   
+        lock=true;
+        selltoken(res,req.query.prvKey,req.query.amount,req.query.token);
+    }
 })
 
     
@@ -45,8 +53,9 @@ async function buytoken(res,prvKey,amountWant,tokenaddress)
     const amountOut=''+data[1]
     console.log(amountIn,amountOut)
     const tx=await Router.methods.swapExactETHForTokens(amountOut, path, to, Date.now()*3*60).send({value:amountWant,from:from.address,gas: '999999'})
-   
+    
     res.status(201).send({result:tx.transactionHash})
+    lock=false;
 }
 
 async function selltoken(res,prvKey,amountWant,tokenaddress)
@@ -63,6 +72,6 @@ async function selltoken(res,prvKey,amountWant,tokenaddress)
     console.log(amountIn,amountOut)
     const tx=await Router.methods.swapExactTokensForETH(amountIn, amountOut, path, to, Date.now()*3*60).send({from:from.address,gas: '999999'})
     res.status(201).send({result:tx.transactionHash})
-    
+    lock=false;
 }
 
